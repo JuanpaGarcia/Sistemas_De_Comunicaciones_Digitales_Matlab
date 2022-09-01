@@ -1,0 +1,43 @@
+clear all;
+close all;
+clc 
+
+%Tarea 2    
+
+[y,Fs] = audioread('spring_HIFI.wav');
+
+k=4;                                 % Cantidad de bits para Cuantizar
+% Cuantizar a entero y expresión en binario
+swing = (2^k-1)/2;                   % Señal simétrica
+xq_int = round(y*swing+swing);       % Convertir a entero en [0 2^b-1]
+xq_bin = de2bi(xq_int,k,'left-msb'); % Convertir entero a binario
+% xq_bin = decimalToBinaryVector(xq_int,k,'MSBFirst'); %Opción 1
+% xq_bin = decimalToBinaryVector(xq_int,k,'LSBFirst'); %Opción 2
+xq = (xq_int-swing)/swing; % Proceso inverso usando xq_int
+decval =
+decVal= binaryVectorToDecimal(xq_bin,'MSBFirst');
+
+%%
+
+% 
+filename = 'Audio_4b.wav';
+audiowrite(filename,decVal,Fs,'BitsPerSample',16,...
+'Comment','This is my new audio file.');
+
+% filename = 'Audio_6b.wav';
+% audiowrite(filename,y,Fs,'BitsPerSample',6,...
+% 'Comment','This is my new audio file.');
+% 
+% filename = 'Audio_10b.wav';
+% audiowrite(filename,y,Fs,'BitsPerSample',10,...
+% 'Comment','This is my new audio file.');
+% 
+% filename = 'Audio_12b.wav';
+% audiowrite(filename,y,Fs,'BitsPerSample',12,...
+% 'Comment','This is my new audio file.');
+
+[y1,Fs] = audioread('Audio_4b.wav');
+sound(y1,Fs)
+
+
+info
