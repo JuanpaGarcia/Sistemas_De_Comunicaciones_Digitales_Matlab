@@ -4,8 +4,14 @@ clc
 
 %Tarea 2    
 
-[y,Fs] = audioread('spring_HIFI.wav');
+[S,Fs] = audioread('spring_HIFI.wav');
+seconds = 10;
 
+for i = 1: (Fs*seconds)
+    y(i) = S(i);
+end
+
+%%
 k=4;                                 % Cantidad de bits para Cuantizar
 % Cuantizar a entero y expresión en binario
 swing = (2^k-1)/2;                   % Señal simétrica
@@ -14,30 +20,128 @@ xq_bin = de2bi(xq_int,k,'left-msb'); % Convertir entero a binario
 % xq_bin = decimalToBinaryVector(xq_int,k,'MSBFirst'); %Opción 1
 % xq_bin = decimalToBinaryVector(xq_int,k,'LSBFirst'); %Opción 2
 xq = (xq_int-swing)/swing; % Proceso inverso usando xq_int
-decval =
-decVal= binaryVectorToDecimal(xq_bin,'MSBFirst');
+decVal = binaryVectorToDecimal(xq_bin,'MSBFirst');
+decVal_song = int16(decVal);
+
+filename = 'Audio_4b.wav';
+audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
+'Comment','This is my new audio file.');
+figure();
+title('Espectrograma de 4Bits');
+spectrogram(decVal,'yaxis');
 
 %%
+k=6;                                 % Cantidad de bits para Cuantizar
+% Cuantizar a entero y expresión en binario
+swing = (2^k-1)/2;                   % Señal simétrica
+xq_int = round(y*swing+swing);       % Convertir a entero en [0 2^b-1]
+xq_bin = de2bi(xq_int,k,'left-msb'); % Convertir entero a binario
+% xq_bin = decimalToBinaryVector(xq_int,k,'MSBFirst'); %Opción 1
+% xq_bin = decimalToBinaryVector(xq_int,k,'LSBFirst'); %Opción 2
+xq = (xq_int-swing)/swing; % Proceso inverso usando xq_int
+decVal = binaryVectorToDecimal(xq_bin,'MSBFirst');
+decVal_song = uint8(decVal);
 
-% 
-filename = 'Audio_4b.wav';
-audiowrite(filename,decVal,Fs,'BitsPerSample',16,...
+filename = 'Audio_6b.wav';
+audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
 'Comment','This is my new audio file.');
-
-% filename = 'Audio_6b.wav';
-% audiowrite(filename,y,Fs,'BitsPerSample',6,...
-% 'Comment','This is my new audio file.');
-% 
-% filename = 'Audio_10b.wav';
-% audiowrite(filename,y,Fs,'BitsPerSample',10,...
-% 'Comment','This is my new audio file.');
-% 
-% filename = 'Audio_12b.wav';
-% audiowrite(filename,y,Fs,'BitsPerSample',12,...
-% 'Comment','This is my new audio file.');
-
-[y1,Fs] = audioread('Audio_4b.wav');
-sound(y1,Fs)
+figure();
+title('Espectrograma de 6Bits');
+spectrogram(decVal,'yaxis');
 
 
-info
+%%
+k=8;                                 % Cantidad de bits para Cuantizar
+% Cuantizar a entero y expresión en binario
+swing = (2^k-1)/2;                   % Señal simétrica
+xq_int = round(y*swing+swing);       % Convertir a entero en [0 2^b-1]
+xq_bin = de2bi(xq_int,k,'left-msb'); % Convertir entero a binario
+% xq_bin = decimalToBinaryVector(xq_int,k,'MSBFirst'); %Opción 1
+% xq_bin = decimalToBinaryVector(xq_int,k,'LSBFirst'); %Opción 2
+xq = (xq_int-swing)/swing; % Proceso inverso usando xq_int
+decVal = binaryVectorToDecimal(xq_bin,'MSBFirst');
+decVal_song = uint8(decVal);
+
+filename = 'Audio_8b.wav';
+audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
+'Comment','This is my new audio file.');
+figure();
+title('Espectrograma de 8Bits');
+spectrogram(decVal,'yaxis');
+
+
+
+%%
+k=10;                                 % Cantidad de bits para Cuantizar
+% Cuantizar a entero y expresión en binario
+swing = (2^k-1)/2;                   % Señal simétrica
+xq_int = round(y*swing+swing);       % Convertir a entero en [0 2^b-1]
+xq_bin = de2bi(xq_int,k,'left-msb'); % Convertir entero a binario
+% xq_bin = decimalToBinaryVector(xq_int,k,'MSBFirst'); %Opción 1
+% xq_bin = decimalToBinaryVector(xq_int,k,'LSBFirst'); %Opción 2
+xq = (xq_int-swing)/swing; % Proceso inverso usando xq_int
+decVal = binaryVectorToDecimal(xq_bin,'MSBFirst');
+decVal_song = int16(decVal);
+
+filename = 'Audio_10b.wav';
+audiowrite(filename,decVal_song,Fs,'BitsPerSample',16,...
+'Comment','This is my new audio file.');
+figure();
+title('Espectrograma de 10Bits');
+spectrogram(decVal,'yaxis');
+
+
+
+%%
+k=12;                                 % Cantidad de bits para Cuantizar
+% Cuantizar a entero y expresión en binario
+swing = (2^k-1)/2;                   % Señal simétrica
+xq_int = round(y*swing+swing);       % Convertir a entero en [0 2^b-1]
+xq_bin = de2bi(xq_int,k,'left-msb'); % Convertir entero a binario
+% xq_bin = decimalToBinaryVector(xq_int,k,'MSBFirst'); %Opción 1
+% xq_bin = decimalToBinaryVector(xq_int,k,'LSBFirst'); %Opción 2
+xq = (xq_int-swing)/swing; % Proceso inverso usando xq_int
+decVal = binaryVectorToDecimal(xq_bin,'MSBFirst');
+decVal_song = int16(decVal);
+
+filename = 'Audio_12b.wav';
+audiowrite(filename,decVal_song,Fs,'BitsPerSample',16,...
+'Comment','This is my new audio file.');
+figure();
+title('Espectrograma de 12Bits');
+spectrogram(decVal,'yaxis');
+
+%% Creación de filtros pasa bajas
+%filtro 1500khz
+F_filtro_max = Fs/2;
+Fcorte_deseada = 15000;
+Fcorte = Fcorte_deseada/F_filtro_max;
+
+f = [0 Fcorte Fcorte 1];
+m = [1 1 0 0]; o = 99;
+LPF_15k = fir2(o,f,m);
+fvtool(LPF_15k);  % Espectro en frecuencia del filtro.
+
+y = conv(x,b); % filtrado de x con filtro b o usando:
+%y = filter(b,1,x]); % filtrado de x con filtro b, %función filter
+%y = fftfilt(b,x);   % A more efficient FIR filtering for large operands
+
+%%
+%filtro 4kHz
+Fcorte_deseada = 4000;
+Fcorte = Fcorte_deseada/F_filtro_max;
+f = [0 Fcorte Fcorte 1];
+LPF_4k = fir2(o,f,m);
+fvtool(LPF_4k);  % Espectro en frecuencia del filtro.
+
+
+%%
+%filtro 1kHz
+Fcorte_deseada = 1000;
+Fcorte = Fcorte_deseada/F_filtro_max;
+f = [0 Fcorte Fcorte 1];
+LPF_1k = fir2(o,f,m);
+fvtool(LPF_1k);  % Espectro en frecuencia del filtro.
+
+
+

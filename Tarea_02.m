@@ -4,7 +4,12 @@ clc
 
 %Tarea 2    
 
-[y,Fs] = audioread('spring_HIFI.wav');
+[S,Fs] = audioread('spring_HIFI.wav');
+seconds = 10;
+
+for i = 1: (Fs*seconds)
+    y(i) = S(i);
+end
 
 %%
 k=4;                                 % Cantidad de bits para Cuantizar
@@ -21,6 +26,10 @@ decVal_song = int16(decVal);
 filename = 'Audio_4b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
 'Comment','This is my new audio file.');
+figure();
+title('Espectrograma de 4Bits');
+spectrogram(decVal,'yaxis');
+
 %%
 k=6;                                 % Cantidad de bits para Cuantizar
 % Cuantizar a entero y expresión en binario
@@ -36,7 +45,9 @@ decVal_song = uint8(decVal);
 filename = 'Audio_6b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
 'Comment','This is my new audio file.');
-
+figure();
+title('Espectrograma de 6Bits');
+spectrogram(decVal,'yaxis');
 
 
 %%
@@ -54,7 +65,9 @@ decVal_song = uint8(decVal);
 filename = 'Audio_8b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
 'Comment','This is my new audio file.');
-
+figure();
+title('Espectrograma de 8Bits');
+spectrogram(decVal,'yaxis');
 
 
 
@@ -73,6 +86,9 @@ decVal_song = int16(decVal);
 filename = 'Audio_10b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',16,...
 'Comment','This is my new audio file.');
+figure();
+title('Espectrograma de 10Bits');
+spectrogram(decVal,'yaxis');
 
 
 
@@ -90,6 +106,59 @@ decVal_song = int16(decVal);
 
 filename = 'Audio_12b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',16,...
+'Comment','This is my new audio file.');
+figure();
+title('Espectrograma de 12Bits');
+spectrogram(decVal,'yaxis');
+
+%% Creación de filtros pasa bajas
+%filtro 1500khz
+F_filtro_max = Fs/2;
+Fcorte_deseada = 15000;
+Fcorte = Fcorte_deseada/F_filtro_max;
+
+f = [0 Fcorte Fcorte 1];
+m = [1 1 0 0]; o = 50;
+LPF_15k = fir2(o,f,m);
+fvtool(LPF_15k);  % Espectro en frecuencia del filtro.
+
+%y = conv(x,b); % filtrado de x con filtro b o usando:
+%y = filter(b,1,x]); % filtrado de x con filtro b, %función filter
+%y = fftfilt(b,x);   % A more efficient FIR filtering for large operands
+
+%%
+%filtro 4kHz
+Fcorte_deseada = 4000;
+Fcorte = Fcorte_deseada/F_filtro_max;
+f = [0 Fcorte Fcorte 1];
+LPF_4k = fir2(o,f,m);
+fvtool(LPF_4k);  % Espectro en frecuencia del filtro.
+
+
+%%
+%filtro 1kHz
+Fcorte_deseada = 1000;
+Fcorte = Fcorte_deseada/F_filtro_max;
+f = [0 Fcorte Fcorte 1];
+o = 70;
+LPF_1k = fir2(o,f,m);
+fvtool(LPF_1k);  % Espectro en frecuencia del filtro.
+%%
+%CREACION DE LAS CANCIONES CON FILTRO
+
+Filtered_song = conv(y,LPF_15k); % filtrado de x con filtro b o usando:
+filename = 'Audio_filtrado_15k.wav';
+audiowrite(filename,Filtered_song,Fs,'BitsPerSample',16,...
+'Comment','This is my new audio file.');
+
+Filtered_song = conv(y,LPF_4k); % filtrado de x con filtro b o usando:
+filename = 'Audio_filtrado_4k.wav';
+audiowrite(filename,Filtered_song,Fs,'BitsPerSample',16,...
+'Comment','This is my new audio file.');
+
+Filtered_song = conv(y,LPF_1k); % filtrado de x con filtro b o usando:
+filename = 'Audio_filtrado_1k.wav';
+audiowrite(filename,Filtered_song,Fs,'BitsPerSample',16,...
 'Comment','This is my new audio file.');
 
 
