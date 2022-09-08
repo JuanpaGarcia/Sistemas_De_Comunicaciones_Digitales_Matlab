@@ -10,6 +10,9 @@ seconds = 10;
 for i = 1: (Fs*seconds)
     y(i) = S(i);
 end
+figure();
+spectrogram(y);
+title('Espectrograma de canción original');
 
 %%
 k=4;                                 % Cantidad de bits para Cuantizar
@@ -27,8 +30,8 @@ filename = 'Audio_4b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
 'Comment','This is my new audio file.');
 figure();
+spectrogram(decVal);
 title('Espectrograma de 4Bits');
-spectrogram(decVal,'yaxis');
 
 %%
 k=6;                                 % Cantidad de bits para Cuantizar
@@ -46,9 +49,8 @@ filename = 'Audio_6b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
 'Comment','This is my new audio file.');
 figure();
+spectrogram(decVal);
 title('Espectrograma de 6Bits');
-spectrogram(decVal,'yaxis');
-
 
 %%
 k=8;                                 % Cantidad de bits para Cuantizar
@@ -66,9 +68,8 @@ filename = 'Audio_8b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',8,...
 'Comment','This is my new audio file.');
 figure();
+spectrogram(decVal);
 title('Espectrograma de 8Bits');
-spectrogram(decVal,'yaxis');
-
 
 
 %%
@@ -87,9 +88,8 @@ filename = 'Audio_10b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',16,...
 'Comment','This is my new audio file.');
 figure();
+spectrogram(decVal);
 title('Espectrograma de 10Bits');
-spectrogram(decVal,'yaxis');
-
 
 
 %%
@@ -108,8 +108,8 @@ filename = 'Audio_12b.wav';
 audiowrite(filename,decVal_song,Fs,'BitsPerSample',16,...
 'Comment','This is my new audio file.');
 figure();
+spectrogram(decVal);
 title('Espectrograma de 12Bits');
-spectrogram(decVal,'yaxis');
 
 %% Creación de filtros pasa bajas
 %filtro 1500khz
@@ -150,16 +150,29 @@ Filtered_song = conv(y,LPF_15k); % filtrado de x con filtro b o usando:
 filename = 'Audio_filtrado_15k.wav';
 audiowrite(filename,Filtered_song,Fs,'BitsPerSample',16,...
 'Comment','This is my new audio file.');
+[X,Fs] = audioread('Audio_filtrado_15k.wav');
+figure();
+spectrogram(X);
+title('Espectrograma de canción filtrada 15k');
 
 Filtered_song = conv(y,LPF_4k); % filtrado de x con filtro b o usando:
 filename = 'Audio_filtrado_4k.wav';
 audiowrite(filename,Filtered_song,Fs,'BitsPerSample',16,...
 'Comment','This is my new audio file.');
+[X,Fs] = audioread('Audio_filtrado_4k.wav');
+figure();
+spectrogram(X);
+title('Espectrograma de canción filtrada 4k');
+
 
 Filtered_song = conv(y,LPF_1k); % filtrado de x con filtro b o usando:
 filename = 'Audio_filtrado_1k.wav';
 audiowrite(filename,Filtered_song,Fs,'BitsPerSample',16,...
 'Comment','This is my new audio file.');
+[X,Fs] = audioread('Audio_filtrado_1k.wav');
+figure();
+spectrogram(X);
+title('Espectrograma de canción filtrada 1k');
 
 
 
