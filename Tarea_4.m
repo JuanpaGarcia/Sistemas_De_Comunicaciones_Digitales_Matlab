@@ -9,7 +9,7 @@ s = zeros(1,numel(b)*mp);
 s(1:mp:end) = b *2-1;
 stem(s)
 %%
-x = conv(s,pbase);  % Verifica las dimensiones de s,p y x. ¿Qué relación hay entre éstas? 
+x = conv(s,pbase);  % Verify dimentions
 plot(x) 
 hold on 
 stem(x,'LineStyle','none') 
@@ -27,34 +27,34 @@ imshow(uint8(lenarec))
 %%
 b=de2bi(lenarec,8); 
 b=b'; 
-bits=b(:);   % Vector de bits concatenado 
+bits=b(:);   % Bits vector 
 %%
-%Recuperar la imagen
+%Image recovery
 
-recuperado = zeros(33,33,'uint32'); %crear espacio apra imagen
-%ciclo para cargar y convertir valores en la matriz nuewva
-counter = 8; %variable para avanzar en el vector de bits
+recuperado = zeros(33,33,'uint32'); %allocate memory
+%load and convert values into a matrix
+counter = 8; %counter variable
 for i = 1 : 33
     for j = 1: 33
         recuperado(j,i) = bi2de(b(counter-7:counter),'right-msb');
         counter = counter +8;
     end
 end
-imshow(uint8(recuperado)) %imagen recuperada
+imshow(uint8(recuperado)) %recovered image
 
 %%
-%Generar los pulsos 
+%Pulse generation
 
 mp = 20;
 
 V_16bit = b(1:16);
 
-%definir pulsos
+%Pulses
 %unipolar NRZ
 UPNRZ = ones(1,mp);
 stem(UPNRZ)
 wvtool(UPNRZ) 
-
+%%
 %Polar RZ
 PRZ= zeros(1,mp); 
 for i = 1:mp
@@ -102,30 +102,37 @@ end
 V_16bit_Unipolar = zeros(1,numel(V_16bit)*mp);
 V_16bit_Unipolar(1:mp:end) = V_16bit;
 %%
+Fs = 9600;
 %Señal con Unipolar NRZ
 Unipolar_NRZ_Sig = conv(UPNRZ ,V_16bit_Unipolar);
 plot(Unipolar_NRZ_Sig)
+title('Signal on Unipolar NRZ line code');
+figure;
+pwelch(Unipolar_NRZ_Sig,Fs,'power');
 
 %%
 %Selak Polar NRZ
 Polar_NRZ_Sig = conv(UPNRZ ,V_16bit_polar);
 plot(Polar_NRZ_Sig)
+title('Signal on Polar NRZ line code');
 
 %%
 %Señal Polar RZ
 Polar_RZ_sig = conv(PRZ, V_16bit_polar);
 plot(Polar_RZ_sig)
+title('Signal on Polar RZ line code');
 
 %%
 %Señal Bipolar NRZ
 Bipolar_NRZ = conv(UPNRZ, V_16bit_polar);
 plot(Bipolar_NRZ);
+title('Signal on Bipolar NRZ line code');
 
 %%
 %Señal Manchester
 Manchester = conv(Manchester, V_16bit_polar);
 plot(Manchester);
-
+title('Signal on manchester line code');
 
 
 
