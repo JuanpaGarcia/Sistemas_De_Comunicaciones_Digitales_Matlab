@@ -72,9 +72,9 @@ wvtool(PRZ)
 Manchester = zeros(1,mp); 
 for i = 1:mp
     if i <= mp/2
-        Manchester(i) = 1;  
+        Manchester(i) = 1;  %load 1
     else
-        Manchester(i) = -1; 
+        Manchester(i) = -1; %load -1
     end
 end
 stem(Manchester)
@@ -84,7 +84,7 @@ wvtool(Manchester)
 
 
 %%
-%Generación de las señales
+%Signal Generation
 
 V_16bit_polar = zeros(1,numel(V_16bit)*mp);
 %V_16bit_polar(1:mp:end) = V_16bit*2-1; 
@@ -103,36 +103,47 @@ V_16bit_Unipolar = zeros(1,numel(V_16bit)*mp);
 V_16bit_Unipolar(1:mp:end) = V_16bit;
 %%
 Fs = 9600;
-%Señal con Unipolar NRZ
+%Unipolar NRZ LineCode
 Unipolar_NRZ_Sig = conv(UPNRZ ,V_16bit_Unipolar);
 plot(Unipolar_NRZ_Sig)
 title('Signal on Unipolar NRZ line code');
 figure;
-pwelch(Unipolar_NRZ_Sig,Fs,'power');
 
+pwelch(Unipolar_NRZ_Sig,[],[],[],Fs,'power');  % PSD of Unipolar NRZ
+title('Spectral power density');
 %%
-%Selak Polar NRZ
+% Polar NRZ LineCode
 Polar_NRZ_Sig = conv(UPNRZ ,V_16bit_polar);
 plot(Polar_NRZ_Sig)
 title('Signal on Polar NRZ line code');
 
+pwelch(Polar_NRZ_Sig,[],[],[],Fs,'power');  % PSD of Unipolar NRZ
+title('Power spectral density');
 %%
-%Señal Polar RZ
+% Polar RZ LineCode
 Polar_RZ_sig = conv(PRZ, V_16bit_polar);
 plot(Polar_RZ_sig)
 title('Signal on Polar RZ line code');
 
+pwelch(Polar_RZ_sig,[],[],[],Fs,'power');  % PSD of Unipolar NRZ
+title('Power spectral density');
 %%
-%Señal Bipolar NRZ
+% Bipolar NRZ LineCode
 Bipolar_NRZ = conv(UPNRZ, V_16bit_polar);
 plot(Bipolar_NRZ);
 title('Signal on Bipolar NRZ line code');
 
+pwelch(Bipolar_NRZ,[],[],[],Fs,'power');  % PSD of Unipolar NRZ
+title('Power spectral density');
+
 %%
-%Señal Manchester
+% Manchester LineCode
 Manchester = conv(Manchester, V_16bit_polar);
 plot(Manchester);
 title('Signal on manchester line code');
+
+pwelch(Bipolar_NRZ,[],[],[],Fs,'power');  % PSD of Unipolar NRZ
+title('Power spectral density');
 
 
 
