@@ -21,7 +21,7 @@ stem(x,'LineStyle','none')
 %matlab
 lena512 = imread('lena.tif');
 imshow(uint8(lena512)) 
-lenarec=lena512(252:284,318:350); 
+lenarec=lena512(243:284,309:350); 
 imshow(uint8(lenarec)) 
 
 %%
@@ -146,11 +146,11 @@ pwelch(Bipolar_NRZ,[],[],[],Fs,'power');  % PSD of Unipolar NRZ
 title('Power spectral density');
 
 %%
-%Parte 8
-
-
-
-
-
+%Modelo sistema físico
+fv=   [0 0.2 0.2 1];  % Vector de Frecuencias 
+mv= [1 1 0 0];        % Vector de Magnitudes 
+fordv=100;             % Orden del Filtro 
+f1v = fir2(ford,f,m);  % Coeficientes del Filtro usando FIR2( ) 
+fvtool(f1v)               % Herramienta para analizar el Filtro  
 
 
