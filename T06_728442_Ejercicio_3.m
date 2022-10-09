@@ -144,8 +144,9 @@ Manchester = sqrt(1/((sum(Manchester.^2))/numel(Manchester))).*Manchester;
 
 %%
 %Filter the signals
+Filter_2_use = filter_1;
 
-Signal_filtered_Unipolar_NRZ = conv(Unipolar_NRZ_Sig, filter_2);
+Signal_filtered_Unipolar_NRZ = conv(Unipolar_NRZ_Sig, Filter_2_use);
 tiledlayout(2,2);
 
 nexttile;
@@ -153,24 +154,49 @@ plot(Signal_filtered_Unipolar_NRZ)
 title('16 bits Filtered signal Unipolar NRZ');
 
 nexttile;
-Signal_filtered_Polar_NRZ = conv(Polar_NRZ_Sig, filter_2);
+Signal_filtered_Polar_NRZ = conv(Polar_NRZ_Sig, Filter_2_use);
 plot(Signal_filtered_Polar_NRZ)
 title('16 bits Filtered signal Polar NRZ');
 
 nexttile;
-Signal_filtered_Bipolar_NRZ = conv(Bipolar_NRZ, filter_2);
+Signal_filtered_Bipolar_NRZ = conv(Bipolar_NRZ, Filter_2_use);
 plot(Signal_filtered_Bipolar_NRZ)
 
-Signal_filtered_Manchester = conv(Manchester, filter_2);
+Signal_filtered_Manchester = conv(Manchester, Filter_2_use);
 plot(Signal_filtered_Manchester)
 title('16 bits Filtered signal Manchester');
 
 nexttile;
-Signal_filtered_Polar_RZ = conv(Polar_RZ_sig, filter_2);
+Signal_filtered_Polar_RZ = conv(Polar_RZ_sig, Filter_2_use);
 plot(Signal_filtered_Polar_RZ)
 title('16 bits Filtered signal AMI RZ');
 %%
 %Power spectral density
+
+
+%%
+%New reception filter 
+%Match filter in wich we flip the pulse vector and conv it with the signal
+%vector 
+Match_filter_UPNRZ = fliplr(UPNRZ);
+Match_filter_PNRZ = fliplr(UPNRZ);
+Match_filter_PRZ = fliplr(PRZ);
+Match_filter_Manchester = fliplr(Manchester);
+Match_filter_Bipolar = fliplr(Manchester);
+
+New_Signal_filtered_Unipolar_NRZ = conv(Signal_filtered_Unipolar_NRZ, Match_filter_UPNRZ);
+New_Signal_filtered_Polar_NRZ = conv(Signal_filtered_Polar_NRZ, Match_filter_PNRZ);
+New_Signal_filtered_Polar_RZ = conv(Signal_filtered_Polar_RZ, Match_filter_PRZ);
+New_Signal_filtered_Manchester = conv(Signal_filtered_Manchester, Match_filter_Manchester);
+
+figure();
+plot(New_Signal_filtered_Unipolar_NRZ);
+figure();
+plot(New_Signal_filtered_Polar_NRZ);
+figure();
+plot(New_Signal_filtered_Polar_RZ);
+figure();
+plot(New_Signal_filtered_Manchester);
 
 
 
@@ -178,38 +204,38 @@ title('16 bits Filtered signal AMI RZ');
 %bit recovery 
 %UPNRZ
 
-delay_signal = ford/2;
+delay_signal = ford/2 + mp/2;
 start_recovery_count = delay_signal + mp/2;
-UPNRZ_recovery = Signal_filtered_Unipolar_NRZ(start_recovery_count:mp:end);
-Decition_treshold_UPNRZ = 0.7;
+UPNRZ_recovery = New_Signal_filtered_Unipolar_NRZ(start_recovery_count:mp:end);
+Decition_treshold_UPNRZ = max(New_Signal_filtered_Unipolar_NRZ)/2;
 %view the samples in a complex plane.
 scatterplot(UPNRZ_recovery);
 %%
 %PNRZ
-delay_signal = ford/2;
+delay_signal = ford/2 + mp/2;
 start_recovery_count = delay_signal + mp/2;
-PNRZ_recovery = Signal_filtered_Polar_NRZ(start_recovery_count:mp:end);
-Decition_treshold_PNRZ = 0.5;
+PNRZ_recovery = New_Signal_filtered_Polar_NRZ(start_recovery_count:mp:end);
+Decition_treshold_PNRZ = max(New_Signal_filtered_Polar_NRZ)/2;
 %view the samples in a complex plane.
 scatterplot(PNRZ_recovery);
 
 %%
 %PRZ
-delay_signal = ford/2;
+delay_signal = ford/2 + mp/2;
 start_recovery_count = round(delay_signal + mp/4);
-PRZ_recovery = Signal_filtered_Polar_RZ(start_recovery_count:mp:end);
-Decition_treshold_PRZ = 0.5;
+PRZ_recovery = New_Signal_filtered_Polar_RZ(start_recovery_count:mp:end);
+Decition_treshold_PRZ = max(New_Signal_filtered_Polar_RZ)/2;
 %view the samples in a complex plane.
 scatterplot(PRZ_recovery);
 
 %%
 %Manchester
-delay_signal = ford/2;
+delay_signal = ford/2 + mp/2;
 start_recovery_count = round(delay_signal + mp/4);
 Manchester_recovery_y1 = Signal_filtered_Manchester(start_recovery_count:mp:end);
 start_recovery_count = round(delay_signal + 3*mp/4);
 Manchester_recovery_y2 = Signal_filtered_Manchester(start_recovery_count:mp:end);
-Decition_treshold_PRZ = 0.5;
+Decition_treshold_Man = 0.5;
 
 %view the samples in a complex plane.
 %scatterplot(Manchester_recovery);
@@ -219,17 +245,18 @@ Decition_treshold_PRZ = 0.5;
 UPNRZ_recovery_bits = zeros(1,numel(V_16bit)); 
 UPNRZ_recovery_bits((UPNRZ_recovery >= Decition_treshold_UPNRZ)) = 1; 
 
+%%
 PNRZ_recovery_bits = zeros(1,numel(V_16bit));
-PNRZ_recovery_bits((PNRZ_recovery > Decition_treshold_UPNRZ)) = 1; 
+PNRZ_recovery_bits((PNRZ_recovery > Decition_treshold_PNRZ)) = 1; 
 
 
 PRZ_recovery_bits = zeros(1,numel(V_16bit));
-PRZ_recovery_bits((PRZ_recovery > Decition_treshold_UPNRZ)) = 1; 
-PRZ_recovery_bits((PNRZ_recovery <= -Decition_treshold_UPNRZ)) = 0;
+PRZ_recovery_bits((PRZ_recovery > Decition_treshold_PRZ)) = 1; 
+
 
 
 Manchester_recovery_bits = zeros(1,numel(V_16bit));
-Manchester_recovery_bits = ( sign(Manchester_recovery_y2 - Manchester_recovery_y1) +1 )/2;
+%Manchester_recovery_bits = ( sign(Manchester_recovery_y2 - Manchester_recovery_y1) +1 )/2;
  
 
 
@@ -275,6 +302,7 @@ for i = 1 : pixels
         counter = counter +8;
     end
 end
+
 imshow(uint8(recuperado)) %recovered image
 title('Imagen UPNRZ');
 
@@ -334,25 +362,3 @@ end
 nexttile;
 imshow(uint8(recuperado)) %recovered image
 title('Image Bipolar NRZ');
-
-%%
-pbase = triang(mp);
-Ep = sum(pbase.*pbase);
-E1 = max(conv(pbase,fliplr(pbase)))
-E2 = conv(UPNRZ,fliplr(pbase));
-E2(mp) %elemento mp conv
-%%
-%Pulsos nuevos
-Gauss_pulse = gausswin(mp);
-Cheby_pulse = chebwin(mp);
-Kaiser_pulse = kaiser(mp);
-Tukey_pulse = tukeywin(mp);
-
-%%
-%Detector pulsos;
-p1 = max(conv(Gauss_pulse,fliplr(pbase)))
-p2 = max(conv(Cheby_pulse,fliplr(pbase)))
-p3 = max(conv(Kaiser_pulse,fliplr(pbase)))
-p4 = max(conv(Tukey_pulse,fliplr(pbase)))
-
-%%
