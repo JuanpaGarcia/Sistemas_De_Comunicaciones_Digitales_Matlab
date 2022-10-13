@@ -144,8 +144,9 @@ Manchester = sqrt(1/((sum(Manchester.^2))/numel(Manchester))).*Manchester;
 
 %%
 %Filter the signals
+filter = filter_3;
 
-Signal_filtered_Unipolar_NRZ = conv(Unipolar_NRZ_Sig, filter_2);
+Signal_filtered_Unipolar_NRZ = conv(Unipolar_NRZ_Sig, filter);
 tiledlayout(2,2);
 
 nexttile;
@@ -153,20 +154,20 @@ plot(Signal_filtered_Unipolar_NRZ)
 title('16 bits Filtered signal Unipolar NRZ');
 
 nexttile;
-Signal_filtered_Polar_NRZ = conv(Polar_NRZ_Sig, filter_2);
+Signal_filtered_Polar_NRZ = conv(Polar_NRZ_Sig, filter);
 plot(Signal_filtered_Polar_NRZ)
 title('16 bits Filtered signal Polar NRZ');
 
 nexttile;
-Signal_filtered_Bipolar_NRZ = conv(Bipolar_NRZ, filter_2);
+Signal_filtered_Bipolar_NRZ = conv(Bipolar_NRZ, filter);
 plot(Signal_filtered_Bipolar_NRZ)
 
-Signal_filtered_Manchester = conv(Manchester, filter_2);
+Signal_filtered_Manchester = conv(Manchester, filter);
 plot(Signal_filtered_Manchester)
 title('16 bits Filtered signal Manchester');
 
 nexttile;
-Signal_filtered_Polar_RZ = conv(Polar_RZ_sig, filter_2);
+Signal_filtered_Polar_RZ = conv(Polar_RZ_sig, filter);
 plot(Signal_filtered_Polar_RZ)
 title('16 bits Filtered signal AMI RZ');
 %%
@@ -336,13 +337,15 @@ imshow(uint8(recuperado)) %recovered image
 title('Image Bipolar NRZ');
 
 %%
+mp = 100;
 pbase = triang(mp);
 Ep = sum(pbase.*pbase);
 E1 = max(conv(pbase,fliplr(pbase)))
-E2 = conv(UPNRZ,fliplr(pbase));
+E2 = conv(pbase,fliplr(pbase));
 E2(mp) %elemento mp conv
 %%
 %Pulsos nuevos
+
 Gauss_pulse = gausswin(mp);
 Cheby_pulse = chebwin(mp);
 Kaiser_pulse = kaiser(mp);
@@ -350,9 +353,9 @@ Tukey_pulse = tukeywin(mp);
 
 %%
 %Detector pulsos;
-p1 = max(conv(Gauss_pulse,fliplr(pbase)))
-p2 = max(conv(Cheby_pulse,fliplr(pbase)))
-p3 = max(conv(Kaiser_pulse,fliplr(pbase)))
-p4 = max(conv(Tukey_pulse,fliplr(pbase)))
+p1 = max(conv(Gauss_pulse,fliplr(Gauss_pulse)))
+p2 = max(conv(Cheby_pulse,fliplr(Gauss_pulse)))
+p3 = max(conv(Kaiser_pulse,fliplr(Gauss_pulse)))
+p4 = max(conv(Tukey_pulse,fliplr(Gauss_pulse)))
 
 %%

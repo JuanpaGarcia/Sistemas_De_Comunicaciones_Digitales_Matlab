@@ -17,7 +17,8 @@ b=de2bi(lenarec,8);
 b=b'; 
 bits=b(:);   % Bits vector
 
-V_bit = b(1:42*42*8);
+pixels = 42;
+V_bit = b(1:pixels*pixels*8); %8 because 8bit pixel
 
 V_bit_polar = zeros(1,numel(V_bit)*mp);
 
@@ -57,11 +58,9 @@ figure();
 plot(Polar_NRZ_sig_hs);
 title('Señal PNRZ half sine');
 
-figure();
 eyediagram(Polar_NRZ_sig_rec,2*mp);
 title('Eyediagrma rectangular');
 
-figure();
 eyediagram(Polar_NRZ_sig_hs,2*mp);
 title('Eyediagrma half sine');
 
@@ -85,13 +84,9 @@ figure();
 plot(Signal_filtered_Polar_NRZ_hs)
 title('Filtered signal Polar NRZ half sine');
 
-delay = ford/2;
-
-figure();
 eyediagram(Signal_filtered_Polar_NRZ_rec,2*mp);
 title('Eyediagrma rectangular');
 
-figure();
 eyediagram(Signal_filtered_Polar_NRZ_hs,2*mp);
 title('Eyediagrma half sine');
 
@@ -121,19 +116,113 @@ title('Normalized Filtered signal Polar NRZ rectangular');
 
 match_filtered_PNRZ_rec = conv(Signal_filtered_Polar_NRZ_rec, fliplr(pr));
 
-
 match_filtered_PNRZ_hs = conv(Signal_filtered_Polar_NRZ_hs, fliplr(hs));
 
 eyediagram(match_filtered_PNRZ_rec,2*mp);
 title('Eyediagrma rectangular');
 
-figure();
 eyediagram(match_filtered_PNRZ_hs,2*mp);
 title('Eyediagrma half sine');
 
+%%
+%Exercise 6
+%Resample the signal and apply a treshold and start sampling
+
+delay_signal = ford/2 + numel(hs)/2; %calculate the signal delay, channel delay + match filter delay
+
+start_recovery_count = delay_signal + mp/2;
+
+%plotting the signal we can see that the maximum value resides between 12
+%units por V+ and V- so a good treshold would be either plus 0 or 6
+
+PNRZ_recovery_rec = match_filtered_PNRZ_rec(start_recovery_count:mp:end);
+PNRZ_recovery_hs = match_filtered_PNRZ_hs(start_recovery_count:mp:end);
+Decition_treshold_PNRZ = 0;
+
+plot(PNRZ_recovery_rec);
+title('Rectangular pulse sampled');
+
+figure();
+plot(PNRZ_recovery_hs);
+title('Rectangular pulse sampled');
+
+%%
+%Exercise 7
+%Graph the constelation
+
+scatterplot(match_filtered_PNRZ_rec);
+title('Rectangular pulse constelation');
+
+scatterplot(match_filtered_PNRZ_hs);
+title('Half-sine pulse constelation');
 
 
+%%
+%Exercise 8
+%Recover the bits, calculate BER and recover the image
 
+%start symbols to bit convertions
+
+PNRZ_recovery_bits_rec = zeros(1,numel(V_bit));
+PNRZ_recovery_bits_rec((PNRZ_recovery_rec > Decition_treshold_PNRZ)) = 1; 
+
+PNRZ_recovery_bits_hs = zeros(1,numel(V_bit));
+PNRZ_recovery_bits_hs((PNRZ_recovery_hs > Decition_treshold_PNRZ)) = 1; 
+
+plot(PNRZ_recovery_bits_rec);
+title('Recovered bits in rectangular pulses');
+
+figure();
+plot(PNRZ_recovery_bits_hs);
+title('Recovered bits in half sine pulses');
+%%
+%calculate BER
+
+%Half sine
+bits_error_PNRZ_hs = xor(V_bit, PNRZ_recovery_bits_hs(1:numel(V_bit)));
+error_PNRZ_hs = sum(bits_error_PNRZ_hs);
+Bit_error_rate_PNRZ_hs = (error_PNRZ_hs/numel(V_bit)) * 100
+
+%Rectangular
+bits_error_PNRZ_rec = xor(V_bit, PNRZ_recovery_bits_rec(1:numel(V_bit)));
+error_PNRZ_rec = sum(bits_error_PNRZ_rec);
+Bit_error_rate_PNRZ_rec = (error_PNRZ_rec/numel(V_bit)) * 100
+
+%%
+%Recover the image
+
+%Half sine
+recuperado = zeros(pixels,pixels,'uint32'); %allocate memory
+%load and convert values into a matrix
+counter = 8; %counter variable
+for i = 1 : pixels
+    for j = 1: pixels
+        recuperado(j,i) = bi2de(PNRZ_recovery_bits_hs(counter-7:counter),'right-msb');
+        counter = counter +8;
+    end
+end
+
+nexttile;
+imshow(uint8(recuperado)) %recovered image
+title('Image recovered half-sine pulse');
+
+%%
+%Recover the image rectangular
+
+%Bipolar
+recuperado = zeros(42,42,'uint32'); %allocate memory
+%load and convert values into a matrix
+counter = 8; %counter variable
+for i = 1 : pixels
+    for j = 1: pixels
+        recuperado(j,i) = bi2de(PNRZ_recovery_bits_rec(counter-7:counter),'right-msb');
+        counter = counter +8;
+    end
+end
+
+nexttile;
+imshow(uint8(recuperado)) %recovered image
+title('Image recovered rectangular pulse');
 
 
 
