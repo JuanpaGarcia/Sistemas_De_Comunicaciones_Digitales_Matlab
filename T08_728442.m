@@ -1,234 +1,205 @@
+clear all;
+close all;
+clc 
 
-%Lena
-numexpediente=42;
-plots = 1;
-sizematrix = numexpediente^2;
-load lena512.mat;
-lenarec=lena512(252:298,318:364);
-b=de2bi(lenarec,8,'left-msb'); 
+%Tarea 8
+
+%%
+mp = 10;
+Fs = 96000;
+
+lena512 = imread('lena.tif');
+imshow(uint8(lena512)) 
+lenarec=lena512(243:284,309:350); 
+imshow(uint8(lenarec)) 
+
+b=de2bi(lenarec,8); 
 b=b'; 
-bits=b(:);   % Vector de bits concatenado
+bits=b(:);   % Bits vector
 
+pixels = 42;
+V_bit = b(1:pixels*pixels*8); %8 because 8bit pixel
+
+plots = 1;
+
+V_bit_polar = zeros(1,numel(V_bit)*mp);
+
+counter = 0;
+for i= 0 : numel(V_bit)-1
+    if V_bit(i+1) == 0
+        value = -1;
+    else
+        value = 1;
+    end
+    V_bit_polar(counter*i+1) = value;
+    counter = mp;
+end
+%%
+n = 0:mp-1;
+w = pi/mp;
+hs = sin(w*n);
+
+% Polar NRZ LineCode halfsine
+Polar_NRZ_sig_hs = conv(hs ,V_bit_polar);
+
+%change power to 1
+Polar_NRZ_sig_hs = sqrt(1/((sum(Polar_NRZ_sig_hs.^2))/numel(Polar_NRZ_sig_hs))).*Polar_NRZ_sig_hs;
+
+if plots == 1
+    plot(Polar_NRZ_sig_hs);
+    title('Señal PNRZ half sine');
+
+    eyediagram(Polar_NRZ_sig_hs,2*mp);
+    title('Eyediagrma half sine');
+end
 
 %%
-%Generación de señal half-sine
-Fs=96000;
-Ts=1/Fs;
-mp=10;
-baudrate=Fs/mp;
-potencia_deseada=sqrt(1);
-
-n = 0:mp-1; 
-w0=pi/(mp);
-Half_sine= sin(w0*n);
-
-xPNRZ_HS = conv(Half_sine,s);
-p_xPNRZ_HS= (sum(xPNRZ_HS.^2))/(numel(xPNRZ_HS));
-xPNRZ_HS = (xPNRZ_HS/sqrt(p_xPNRZ_HS))*potencia_deseada;
-p_xPNRZ_HS= (sum(xPNRZ_HS.^2))/(numel(xPNRZ_HS));
-
-%%
-%Filtro
-
-%Frecuencia de corte 0.4
+%Low pass filter generation, communications channel
+%F 0.3042
 f=[0 0.6 0.6 1];
 m=[1 1 0 0];
 ford=60;
-filter_delay=ford/2;
-f1=fir2(ford,f,m);
+filter_1 = fir2(ford,f,m);
 
-show_f = 0;
-if show_f ==1
-    fvtool(f1);
+Signal_filtered_Polar_NRZ_hs = conv(Polar_NRZ_sig_hs, filter_1);
+
+if plots == 1
+    plot(Signal_filtered_Polar_NRZ_hs)
+    title('Filtered signal Polar NRZ half sine');
+
+    eyediagram(Signal_filtered_Polar_NRZ_hs,2*mp);
+    title('Eyediagrma half sine');
 end
 
 
-%%
-%Canal
-fxPNRZ=conv(xPNRZ,f1);
-fxPNRZ_HS=conv(xPNRZ_HS,f1);
+%change power to 1
+Signal_filtered_Polar_NRZ_hs = sqrt(1/((sum(Signal_filtered_Polar_NRZ_hs.^2))/numel(Signal_filtered_Polar_NRZ_hs))).*Signal_filtered_Polar_NRZ_hs;
+if plots == 1
+    plot(Signal_filtered_Polar_NRZ_hs)
+    title('Normalized Filtered signal Polar NRZ half sine');
+end
+
+pow_PNRZ_hs= (sum(Signal_filtered_Polar_NRZ_hs.^2))/(numel(Signal_filtered_Polar_NRZ_hs));
 
 %%
-%Polar NRZ
+%NOISE 
 
-%PNRZ HS
-p_fxPNRZ_HS= (sum(fxPNRZ_HS.^2))/(numel(fxPNRZ_HS));
-fxPNRZ_HS = (fxPNRZ_HS/sqrt(p_fxPNRZ_HS))*potencia_deseada;
-p_fxPNRZ_HS= (sum(fxPNRZ_HS.^2))/(numel(fxPNRZ_HS));
+PNoise= 0.015625*mp;
 
-%%
+%noise signal
+PNoise_PNRZ_hs = sqrt(PNoise)*randn(1,numel(Signal_filtered_Polar_NRZ_hs));
 
-%Ruido
-
-PNoise= 1*mp;
-
-%PNoise=0:3:30;
-
-%Ruido
-Noise_PNRZ_HS=sqrt(PNoise)*randn(1,numel(fxPNRZ_HS));
-
-%Potencia del ruido
-PNoise_PNRZ_HS=var(Noise_PNRZ_HS);
+%Power
+PNoise_PNRZ_pow_hs=var(PNoise_PNRZ_hs)
 
 %SNR
-SNR_dB_PNRZ_HS=10*log10(p_fxPNRZ_HS/PNoise);
+SNR_dB_PNRZ_HS=10*log10(pow_PNRZ_hs/PNoise)
 
-%Añadir ruido
-fxPNRZ_HS_AWGN=fxPNRZ_HS+Noise_PNRZ_HS;
+%ADD NOISE TO SIGNAL
+noisy_PNRZ_hs= Signal_filtered_Polar_NRZ_hs + PNoise_PNRZ_hs;
 
 %%
-%Match Filter
 
-filter_recovery_delay = mp/2;
+delay_mf = mp/2;
 
-%PNRZ_HS
-pbasePNRZ_HS_receptor=fliplr(Half_sine);
-
-recover_PNRZ_HS=conv(fxPNRZ_HS_AWGN,pbasePNRZ_HS_receptor);
+match_filter = fliplr(hs);
+recovered_signal_PNRZ_hs = conv(match_filter, noisy_PNRZ_hs);
 
 %%
 %Estimador espectral de potencia
 if plots ==1
     figure;
-    pwelch(recover_PNRZ_HS,500,300,500,Fs,'power');
+    pwelch(recovered_signal_PNRZ_hs,500,300,500,Fs,'power');
 end
-
 
 %%
 %Diagrama de ojo
 if plots ==1
-    eyediagram(recover_PNRZ_HS,2*mp);
+    eyediagram(recovered_signal_PNRZ_hs,2*mp);
 end
-
 
 %%
 %Muestreo
 %PNRZ_HS
 
-start=filter_delay+(mp/2)+filter_recovery_delay;
+start= ford/2+(mp/2)+ delay_mf;
 
-MfxPNRZ_HS=recover_PNRZ_HS(start:mp:end);
+sampled_noisy_PNRZ_hs = recovered_signal_PNRZ_hs(start:mp:end);
 
 if plots ==1
-    scatterplot(MfxPNRZ_HS);
+    scatterplot(sampled_noisy_PNRZ_hs);
 end
 
-umbral_PolarNRZ_HS=0;
+treshold_PolarNRZ_HS=0;
 
-bits_Rx_PNRZ_HS=zeros(1,numel(MfxPNRZ_HS));
+PNRZ_recovery_bits_hs = zeros(1,numel(V_bit));
+PNRZ_recovery_bits_hs((sampled_noisy_PNRZ_hs > treshold_PolarNRZ_HS)) = 1; 
 
-bits_Rx_PNRZ_HS(MfxPNRZ_HS>=umbral_PolarNRZ_HS)=1;
-
-bits_Rx_PNRZ_HS(MfxPNRZ_HS<umbral_PolarNRZ_HS)=0;
-
-bits_Rx_PNRZ_HS=bits_Rx_PNRZ_HS(1:numel(bits));
-
-bits_Rx_PNRZ_HS=bits_Rx_PNRZ_HS';
-
-bits_Rx_PNRZ_HS=bits_Rx_PNRZ_HS(:);
-
-bits_error=sum(xor(bits,bits_Rx_PNRZ_HS(1:numel(bits))));
-
-BER_PNRZ_HS=(bits_error/numel(bits))*100;
-
-%Recuperación
-bits_reshape=reshape(bits_Rx_PNRZ_HS, 8, []);
-
-bits_reshape=bits_reshape';
-
-decVal=bi2de(bits_reshape,'left-msb');
-
-lena_reshape=reshape(decVal, size(lenarec));
-
-if plots ==1
-    figure;
-    imshow(uint8(lena_reshape));
-    title('Recovered image');
+if plots == 1
+    figure();
+    plot(PNRZ_recovery_bits_hs);
+    title('Recovered bits in half sine pulses');
 end
 
 
 %%
-%Cambiando PNoise
+%Recover the image
 
-n=0:3:30;
-PNoise=(1./(10.^(n./10)))*mp;
+%Half sine
+recuperado = zeros(pixels,pixels,'uint32'); %allocate memory
+%load and convert values into a matrix
+counter = 8; %counter variable
+for i = 1 : pixels
+    for j = 1: pixels
+        recuperado(j,i) = bi2de(PNRZ_recovery_bits_hs(counter-7:counter),'right-msb');
+        counter = counter +8;
+    end
+end
 
-%%
-%Ruido
-i=1;
-Noise_PNRZ_HS=sqrt(PNoise(i)).*randn(1,numel(fxPNRZ_HS));
-
-%Potencia del ruido
-PNoise_PNRZ_HS= var(Noise_PNRZ_HS);
-
-%SNR
-SNR_dB_PNRZ_HS=10*log10(p_fxPNRZ_HS/PNoise(i));
-
-%Añadir ruido
-fxPNRZ_HS_AWGN=fxPNRZ_HS+Noise_PNRZ_HS;
-
-%%
-%Match Filter
-
-filter_recovery_delay = mp/2;
-
-%PNRZ_HS
-pbasePNRZ_HS_receptor=fliplr(Half_sine);
-recover_PNRZ_HS=conv(fxPNRZ_HS_AWGN,pbasePNRZ_HS_receptor);
-
-%%
-%Estimador espectral de potencia
-
-figure;
-pwelch(recover_PNRZ_HS,500,300,500,Fs,'power');
-
-%%
-%Diagrama de ojo
-
-eyediagram(recover_PNRZ_HS,2*mp);
-
-%%
-%Muestreo
+if plots == 1
+    figure();
+    imshow(uint8(recuperado)) %recovered image
+    title('Image recovered half-sine pulse');
+end
 
 
 %%
-%PNRZ_HS
+%calculate BER
 
-start=filter_delay+(mp/2)+filter_recovery_delay;
+%Half sine
+bits_error_PNRZ_hs = xor(V_bit, PNRZ_recovery_bits_hs(1:numel(V_bit)));
+error_PNRZ_hs = sum(bits_error_PNRZ_hs);
+Bit_error_rate_PNRZ_hs = (error_PNRZ_hs/numel(V_bit)) * 100
 
-MfxPNRZ_HS=recover_PNRZ_HS(start:mp:end);
+%%
 
-scatterplot(MfxPNRZ_HS);
 
-umbral_PolarNRZ_HS=0;
 
-bits_Rx_PNRZ_HS=zeros(1,numel(MfxPNRZ_HS));
 
-bits_Rx_PNRZ_HS(MfxPNRZ_HS>=umbral_PolarNRZ_HS)=1;
 
-bits_Rx_PNRZ_HS(MfxPNRZ_HS<umbral_PolarNRZ_HS)=0;
 
-bits_Rx_PNRZ_HS=bits_Rx_PNRZ_HS(1:numel(bits));
 
-bits_Rx_PNRZ_HS=bits_Rx_PNRZ_HS';
 
-bits_Rx_PNRZ_HS=bits_Rx_PNRZ_HS(:);
 
-bits_error=sum(xor(bits,bits_Rx_PNRZ_HS(1:numel(bits))));
 
-BER_PNRZ_HS=(bits_error/numel(bits))*100;
 
-%Recuperación
-bits_reshape=reshape(bits_Rx_PNRZ_HS, 8, sizematrix);
 
-bits_reshape=bits_reshape';
 
-decVal=bi2de(bits_reshape,'left-msb');
 
-lena_reshape=reshape(decVal, size(lenarec));
 
-figure;
 
-imshow(uint8(lena_reshape));
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
