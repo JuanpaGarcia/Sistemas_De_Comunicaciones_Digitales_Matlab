@@ -199,30 +199,16 @@ end
 
 
 PNRZ_recovery_bits_rec = zeros(1,numel(V_bit_pixels));
-PNRZ_recovery_bits_rec((recovery_signal > treshhold)) = 1; 
+PNRZ_recovery_bits_rec((recovery_signal > Decition_treshold_PNRZ)) = 1; 
 
 %calculate BER
 
-bits_error_PNRZ_hs = xor(V_bit_pixels, PNRZ_recovery_bits_rec(1:numel(V_bit_pixels)));
-error_PNRZ = sum(bits_error_PNRZ_hs);
-Bit_error_rate_PNRZ = (error_PNRZ/numel(V_bit_pixels)) * 100
-
-%%
-%Recover the image
-
 %Half sine
-recuperado = zeros(pixels,pixels,'uint32'); %allocate memory
-%load and convert values into a matrix
-counter = 8; %counter variable
-for i = 1 : pixels
-    for j = 1: pixels
-        recuperado(j,i) = bi2de(PNRZ_recovery_bits_rec(counter-7:counter),'right-msb');
-        counter = counter +8;
-    end
-end
+bits_error_PNRZ_hs = xor(V_bit, PNRZ_recovery_bits_hs(1:numel(V_bit)));
+error_PNRZ_hs = sum(bits_error_PNRZ_hs);
+Bit_error_rate_PNRZ_hs = (error_PNRZ_hs/numel(V_bit)) * 100
 
-imshow(uint8(recuperado)) %recovered image
-title('Image recovered half-sine pulse');
+
 
 
 
