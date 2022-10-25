@@ -30,6 +30,7 @@ pbase1 = rcpulse(beta,D,Tp,Ts,type,energy);
 %Pulse 2
 Fs = 8000;
 Rs = 2000;
+Tp = 1/Rs; 
 Entero_forzoso = Tp/Ts; %mp
 beta = 0.2;
 Rs = ((2*B)/Rs)-1;
@@ -77,6 +78,8 @@ energy = Tp;
 type = 'rc';
 
 pbase = rcpulse(beta,D,Tp,Ts,type,energy);
+ms = Tp/Ts;
+t=-(D*Tp)/2:Ts:(D*Tp)/2-Ts;
 
 V_bit = [1 0 1 1 0 0 1 1 1 1 1];
 
@@ -101,6 +104,23 @@ if plots == 1
     plot(Polar_NRZ_sig);
     title('Transmitted signal');
 end
+
+p=pbase;
+data = V_bit;
+int = 1/Fs; len=numel(data);
+%Points for basic pulse;
+lt=numel(t);
+num = Fs*Tp*(D+len-1)+1;      %Total width of output
+%Superimpose pulses one by one, left to right
+
+ty = 0 : Ts : num * Ts-Ts;
+figure;
+plot(ty,Polar_NRZ_sig(1:201));
+grid;
+start=(D * ms)/2;
+datapos = start*Ts : ms*Ts : (41+numel(data)*ms)*Ts;
+hold on;
+stem(datapos,data,'r');
 
 %%
 %Exercise 4
