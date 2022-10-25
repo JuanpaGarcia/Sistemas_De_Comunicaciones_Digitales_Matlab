@@ -32,8 +32,8 @@ Fs = 8000;
 Rs = 2000;
 Entero_forzoso = Tp/Ts; %mp
 beta = 0.2;
-Rb = ((2*B)/Rs)-1;
-Tp = 1/Rb; 
+Rs = ((2*B)/Rs)-1;
+Tp = 1/Rs; 
 Ts = 1/Fs;
 energy = Tp;
 D = 10;
@@ -95,7 +95,7 @@ end
 %%
 % Polar NRZ LineCode halfsine
 Polar_NRZ_sig = conv(pbase ,V_bit_polar);
-plots = 1;
+
 if plots == 1
     figure();
     plot(Polar_NRZ_sig);
@@ -113,8 +113,8 @@ end
  D = 10;
  Rb = Rs;
  Tp = 1/Rb; 
- energy = sqrt(Tp);
- type = 'rc';
+ energy = Tp;
+ type = 'srrc';
  mp = round(Tp/Ts); %mp
  SRRC = rcpulse(beta,D,Tp,Ts,type,energy);
 
@@ -149,7 +149,7 @@ if plots == 1
 end 
 
 
-start = round(numel(SRRC)/2);
+start = floor(numel(SRRC)/2);
 sampled_srrc_PNRZ_sig = srrc_PNRZ_sig(start:mp:end);
 
 if plots == 1
@@ -183,7 +183,7 @@ match_f = fliplr(SRRC);
 
 recover_signal = conv(match_f,signal_filtered);
 
-start_recovery = ford/2 + start;
+start_recovery = ford/2 + start*2;
 
 recovery_signal = recover_signal(start_recovery:mp:end);
 treshhold = 0;
@@ -193,7 +193,7 @@ if plots == 1
     pwelch(recover_signal,500,300,500,Fs,'power');
     title('PSD bit stream');
     %eyediagram 
-    eyediagram(recover_signal, 3*mp);
+    eyediagram(recover_signal(start_recovery:mp*(128*128/4)), 3*mp);
     scatterplot(recovery_signal);
 end 
 
@@ -222,9 +222,128 @@ for i = 1 : pixels
 end
 
 imshow(uint8(recuperado)) %recovered image
-title('Image recovered half-sine pulse');
+title('Image recovered');
+
+%%
+
+%%
+%Exercise 6
+%Transmition 
+
+ beta = 0.5;
+ Fs = 96000;
+ Ts = 1/Fs;
+ Rs = 9600;
+ D = 10;
+ Rb = Rs;
+ Tp = 1/Rb; 
+ energy = Tp;
+ type = 'srrc';
+ mp = round(Tp/Ts); %mp
+ SRRC = rcpulse(beta,D,Tp,Ts,type,energy);
+
+lena512 = imread('lena.tif');
+pixels = 128; 
+lenarec=lena512((284-(pixels-1)):284, (350-(pixels-1)):350); 
+
+b=de2bi(lenarec,8); 
+b=b'; 
+bits=b(:);   % Bits vector
+V_bit_pixels = b(1:pixels*pixels*8); %8 because 8bit pixel
+
+V_bit_pixels_polar = zeros(1,numel(V_bit_pixels)*mp);
+
+counter = 0;
+for i= 0 : numel(V_bit_pixels)-1
+    if V_bit_pixels(i+1) == 0
+        value = -1;
+    else
+        value = 1;
+    end
+    V_bit_pixels_polar(counter*i+1) = value;
+    counter = mp;
+end
+
+srrc_PNRZ_sig = conv(V_bit_pixels_polar, SRRC);
+
+if plots == 3
+    bits_2_plot = 16;
+    plot(srrc_PNRZ_sig(51:51+mp*bits_2_plot));
+end 
 
 
+start = floor(numel(SRRC)/2);
+sampled_srrc_PNRZ_sig = srrc_PNRZ_sig(start:mp:end);
+
+if plots == 1
+    scatterplot(sampled_srrc_PNRZ_sig);
+    title('Bits plot');
+    %analize PSD
+    figure();
+    pwelch(srrc_PNRZ_sig,500,300,500,Fs,'power');
+    title('PSD bit stream');
+    %eyediagram 
+    eyediagram(srrc_PNRZ_sig(start:mp*2000), 3*mp);
+end 
+%%
+%Reception
+
+%channel 
+%Low pass filter generation, communications channel
+
+f=[0 0.6 0.6 1];
+m=[1 1 0 0];
+ford=60;
+filter_1 = fir2(ford,f,m);
+
+%signal transmited
+signal_filtered = conv(filter_1,srrc_PNRZ_sig);
+
+%match filter
+match_f = fliplr(SRRC);
+
+recover_signal = conv(match_f,signal_filtered);
+
+start_recovery = ford/2 + start*2;
+
+recovery_signal = recover_signal(start_recovery:mp:end);
+treshhold = 0;
+
+if plots == 1
+    figure();
+    pwelch(recover_signal,500,300,500,Fs,'power');
+    title('PSD bit stream');
+    %eyediagram 
+    eyediagram(recover_signal(start_recovery:mp*(128*128/4)), 3*mp);
+    scatterplot(recovery_signal);
+end 
+
+
+PNRZ_recovery_bits_rec = zeros(1,numel(V_bit_pixels));
+PNRZ_recovery_bits_rec((recovery_signal > treshhold)) = 1; 
+
+%calculate BER
+
+bits_error_PNRZ_hs = xor(V_bit_pixels, PNRZ_recovery_bits_rec(1:numel(V_bit_pixels)));
+error_PNRZ = sum(bits_error_PNRZ_hs);
+Bit_error_rate_PNRZ = (error_PNRZ/numel(V_bit_pixels)) * 100
+
+
+%Recover the image
+%%
+%Half sine
+recuperado = zeros(pixels,pixels,'uint32'); %allocate memory
+%load and convert values into a matrix
+counter = 8; %counter variable
+for i = 1 : pixels
+    for j = 1: pixels
+        recuperado(j,i) = bi2de(PNRZ_recovery_bits_rec(counter-7:counter),'right-msb');
+        counter = counter +8;
+    end
+end
+
+imshow(uint8(recuperado)) %recovered image
+title('Image recovered');
 
 
 
