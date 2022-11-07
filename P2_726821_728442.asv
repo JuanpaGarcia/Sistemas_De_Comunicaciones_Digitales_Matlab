@@ -59,22 +59,11 @@ plot(y);
 
 %sending signal
 soundsc(y,Fs);
+
 %%
-clear all;
-preamble= [1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0]' ; % poner 56
-SFD = [1 0 1 0 1 0 1 1]' ;
-DSA = de2bi(uint8('Practica II FASE II: 726821 y 728442'),8,'left-msb'); 
-DSA = reshape(DSA',numel(DSA),1); 
-load lena512.mat; img = uint8(lena512); 
-img = img(248:247+41,245:244+42,1); % Image size= 4(UDE1) x 4(UDE2) pixels 
-imshow(img);  % Where UDE =Último Dígito Expediente 
-size_img = de2bi(size(img),16,'left-msb');
-header= [size_img(1,:) size_img(2,:)]'; 
-b = de2bi(img,8,'left-msb');
-b = b'; 
-bits = b(:);  
-bits2Tx = [preamble; SFD; DSA; header; bits];
-%%
+5.  Utilizando su Tarea 7-8 con los siguientes parámetros para el pulso base: Fs = 96000 Hz, pulso tipo SRRC con 
+𝛽 =0.25, D=10 y ancho de banda  B=4000𝐻𝑧. Determine la tasa de bits Rb, el baud-rate Rs, y el número de 
+muestras por pulso mp. Observe y corrobore:    
 Fs      =   96e3;              % Samples per second  
 Ts      =   1/Fs;              % Sampling period 
 beta    =   0.25;              % Roll-off factor 
@@ -87,23 +76,4 @@ B       =   (Rb*(1+beta)/2)    % Bandwidth consumed
 D       =   10;                % Time duration in terms of Tp 
 type    =   'srrc';            % Shape pulse: Square Root Rise Cosine 
 E       =   Tp;                % Energy 
-[pbase ~] = rcpulse(beta, D, Tp, Ts, type, E);    % Pulse Generation 
-
-s1 = int8(bits2Tx);
-s1(s1==0) = -1;  % Convert “0” to “-1”
-s = zeros(1,numel(s1)*mp);
-s(1:mp:end) = s1;
-xPNRZ = conv(pbase,s); % Line code 
-
-powe_polar = sum(xPNRZ.^2)/numel(xPNRZ);
-norm_polar = sqrt(1/powe_polar)*xPNRZ; % 1 Watt Polar NRZ
-
-pulse_time_transmition = numel(pbase)/Rb;
-pulseTrain_time_transmition = numel(bits2Tx)/Rb;
-
-eyediagram(norm_polar, mp*2);
-%%
-silence = zeros(1,(0.5*Fs));
-TxPulseTrain = [silence, norm_polar];
-
-soundsc( TxPulseTrain, Fs );
+[pbase ~] = rcpulse(beta, D, Tp, Ts, type, E);    % Pulse Generation
