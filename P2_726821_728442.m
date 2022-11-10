@@ -60,7 +60,6 @@ plot(y);
 %sending signal
 soundsc(y,Fs);
 %%
-clear all;
 preamble= [1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0]' ; % poner 56
 SFD = [1 0 1 0 1 0 1 1]' ;
 DSA = de2bi(uint8('Practica II FASE II: 726821 y 728442'),8,'left-msb'); 
@@ -98,7 +97,7 @@ xPNRZ = conv(pbase,s); % Line code
 powe_polar = sum(xPNRZ.^2)/numel(xPNRZ);
 norm_polar = sqrt(1/powe_polar)*xPNRZ; % 1 Watt Polar NRZ
 
-pulse_time_transmition = numel(pbase)/Rb;
+pulse_time_transmition = mp/Fs;
 pulseTrain_time_transmition = numel(bits2Tx)/Rb;
 
 eyediagram(norm_polar, mp*2);
@@ -107,3 +106,96 @@ silence = zeros(1,(0.5*Fs));
 TxPulseTrain = [silence, norm_polar];
 
 soundsc( TxPulseTrain, Fs );
+%%
+Fs = 96e3;  % Time duration of the whole communication including the silence 
+file = 'AP2.wav'; 
+FILE_INFO = audioinfo(file);
+[Rx_signal,Fs] = audioread(file); 
+sec = FILE_INFO.Duration;
+threshold = 0.1;                            % Detecting the channel energization 
+start = find(abs(Rx_signal)> threshold,3,'first'); % Initial 
+stop  = find(abs(Rx_signal)> threshold,1,'last');  % End 
+Rx_signal = Rx_signal (start:stop); 
+
+MF = fliplr(pbase);
+Mfil = conv(Rx_signal,MF);
+
+eyediagram(Mfil(1:50000), mp*3);
+figure;
+pwelch(Mfil,[],[],[],Fs,'power'); % PSD
+title('PSD Non wait time PNRZ recovered signal');
+%%
+start =  96; % Starting medition point considering f1 and MF
+sampled_signal_0_db = Mfil(start:mp:end); % Sample every mp
+ 
+bits_Rxp_0_db = zeros(1,numel(sampled_signal_0_db));
+bits_Rxp_0_db(sampled_signal_0_db >= 0) = 1;
+bits_Rxp_0_db(sampled_signal_0_db < 0) = 0;
+bits_Rxp_0_db = bits_Rxp_0_db(1:numel(bits2Tx));
+bits_Rxp_0_db = bits_Rxp_0_db';
+bits_Rxp_0_db(:);
+error =  sum(xor(bits2Tx,bits_Rxp_0_db));
+BER = (error/numel(bits2Tx)) * 100;
+%%
+Fs      =   96e3;              % Samples per second  
+Ts      =   1/Fs;              % Sampling period 
+beta    =   0.25;              % Roll-off factor 
+B       =   12000;              % Bandwidth available 
+Rb      =   2*B/(1+beta);      % Bit rate = Baud rate 
+mp      =   ceil(Fs/Rb)        % samples per pulse 
+Rb      =   Fs/mp;             % Recompute bit rate 
+Tp      =   1/Rb;              % Symbol period 
+B       =   (Rb*(1+beta)/2)    % Bandwidth consumed 
+D       =   10;                % Time duration in terms of Tp 
+type    =   'srrc';            % Shape pulse: Square Root Rise Cosine 
+E       =   Tp;                % Energy 
+[pbase ~] = rcpulse(beta, D, Tp, Ts, type, E);    % Pulse Generation 
+
+s1 = int8(bits2Tx);
+s1(s1==0) = -1;  % Convert “0” to “-1”
+s = zeros(1,numel(s1)*mp);
+s(1:mp:end) = s1;
+xPNRZ = conv(pbase,s); % Line code 
+
+powe_polar = sum(xPNRZ.^2)/numel(xPNRZ);
+norm_polar = sqrt(1/powe_polar)*xPNRZ; % 1 Watt Polar NRZ
+
+pulse_time_transmition = mp/Fs;
+pulseTrain_time_transmition = numel(bits2Tx)/Rb;
+
+eyediagram(norm_polar, mp*2);
+%%
+silence = zeros(1,(0.5*Fs));
+TxPulseTrain = [silence, norm_polar];
+
+soundsc( TxPulseTrain, Fs );
+%%
+Fs = 96e3;  % Time duration of the whole communication including the silence 
+file = 'AP2.wav'; 
+FILE_INFO = audioinfo(file);
+[Rx_signal,Fs] = audioread(file); 
+sec = FILE_INFO.Duration;
+threshold = 0.1;                            % Detecting the channel energization 
+start = find(abs(Rx_signal)> threshold,3,'first'); % Initial 
+stop  = find(abs(Rx_signal)> threshold,1,'last');  % End 
+Rx_signal = Rx_signal (start:stop); 
+
+MF = fliplr(pbase);
+Mfil = conv(Rx_signal,MF);
+
+eyediagram(Mfil(1:50000), mp*3);
+figure;
+pwelch(Mfil,[],[],[],Fs,'power'); % PSD
+title('PSD Non wait time PNRZ recovered signal');
+%%
+start =  96; % Starting medition point considering f1 and MF
+sampled_signal_0_db = Mfil(start:mp:end); % Sample every mp
+ 
+bits_Rxp_0_db = zeros(1,numel(sampled_signal_0_db));
+bits_Rxp_0_db(sampled_signal_0_db >= 0) = 1;
+bits_Rxp_0_db(sampled_signal_0_db < 0) = 0;
+bits_Rxp_0_db = bits_Rxp_0_db(1:numel(bits2Tx));
+bits_Rxp_0_db = bits_Rxp_0_db';
+bits_Rxp_0_db(:);
+error =  sum(xor(bits2Tx,bits_Rxp_0_db));
+BER = (error/numel(bits2Tx)) * 100;
