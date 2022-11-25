@@ -88,7 +88,7 @@ imshow(uint8 (recuperado));
 %**************************   12KHz   ******************************%
 % RECEIVING SIGNAL
 Fs = 96e3;  
-file = '12K.wav'; % SAVED AUDIO IN THE TRANSMITION 
+file = 'exa2.wav'; % SAVED AUDIO IN THE TRANSMITION 
 FILE_INFO = audioinfo(file);
 [Rx_signal,Fs] = audioread(file); 
 sec = FILE_INFO.Duration;
